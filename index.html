@@ -1,91 +1,53 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>대화 분석기</title>
+  <title>대화 분석 웹 페이지</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-
-    textarea {
-      width: 100%;
-    }
-
-    button {
-      margin-top: 10px;
-    }
+    /* 여기에 CSS 스타일 삽입 */
   </style>
 </head>
 <body>
-  <h1>대화 분석기</h1>
-  <textarea id="conversation" rows="10" cols="50"></textarea>
-  <button onclick="parseConversation()">분석하기</button>
-  <br>
-  <select id="participant" onchange="filterConversation()">
-    <!-- 구성원 드롭다운 -->
-  </select>
-  <br>
-  <div id="filteredConversation">
-    <!-- 필터링된 대화 -->
+  <div id="app">
+    <textarea id="inputText" rows="10" cols="30"></textarea>
+    <button onclick="parseText()">분석하기</button>
+    <select id="userSelect">
+      <option value="all">전체</option>
+    </select>
+    <div id="output"></div>
   </div>
+
   <script>
-    const participants = new Set();
-    const messages = [];
+    // 여기에 JavaScript 코드 삽입
 
-    function parseConversation() {
-      const conversationText = document.getElementById('conversation').value;
-      const lines = conversationText.split('\n');
-
-      for (const line of lines) {
-        const nameMatch = line.match(/\[* (.*?)\]/);
-        const timeMatch = line.match(/\[(오전|오후) (.*?)\]/);
-
-        if (nameMatch && timeMatch) {
-          const name = nameMatch[1];
-          const time = timeMatch[1] + ' ' + timeMatch[2];
-          const messageText = line.substring(timeMatch.index + timeMatch[0].length + 1).trim();
-
-          const message = {
-            name,
-            time,
-            text: messageText
-          };
-
-          participants.add(name);
-          messages.push(message);
+    function parseText() {
+      const lines = document.getElementById('inputText').value.split(/\r?\n/);
+      const users = new Set();
+      
+      lines.forEach((line, index) => {
+        const parts = line.split('] ');
+        
+        // 구성원 추출
+        if (parts.length === 3 && !users.has(parts[0])) {
+          users.add(parts[0]);
+          const option = document.createElement('option');
+          option.value = parts[0];
+          option.text = parts[0];
+          document.getElementById('userSelect').add(option);
         }
-      }
+      });
 
-      const participantSelect = document.getElementById('participant');
-      participantSelect.innerHTML = '<option selected value="">모두 보기</option>';
-      for (const participant of participants) {
-        const option = document.createElement('option');
-        option.value = participant;
-        option.innerText = participant;
-        participantSelect.appendChild(option);
-      }
+      document.getElementById('userSelect').addEventListener('change', function() {
+        const selectedUser = this.value;
+        const filteredLines = lines.filter(line => {
+          return line.startsWith(selectedUser) || selectedUser === 'all';
+        });
 
-      refreshFilteredConversation();
-    }
+        document.getElementById('output').innerHTML = filteredLines.join('<br>');
+      });
 
-    function filterConversation() {
-      const participantSelect = document.getElementById('participant');
-      const selectedParticipant = participantSelect.value;
-      const filteredMessages = messages.filter((message) => selectedParticipant === '' || message.name === selectedParticipant);
-      refreshFilteredConversation(filteredMessages);
-    }
-
-    function refreshFilteredConversation(messagesToDisplay) {
-      const filteredConversationDiv = document.getElementById('filteredConversation');
-      filteredConversationDiv.innerHTML = '';
-
-      for (const message of messagesToDisplay) {
-        const messageDiv = document.createElement('div');
-        messageDiv.innerText = `[${message.name}] [${message.time}] ${message.text}`;
-        filteredConversationDiv.appendChild(messageDiv);
-      }
+      document.getElementById('userSelect').dispatchEvent(new Event('change'));
     }
   </script>
 </body>
