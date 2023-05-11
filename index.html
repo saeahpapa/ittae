@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>대화 분석기</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    textarea {
+      width: 100%;
+    }
+
+    button {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>대화 분석기</h1>
+  <textarea id="conversation" rows="10" cols="50"></textarea>
+  <button onclick="parseConversation()">분석하기</button>
+  <br>
+  <select id="participant" onchange="filterConversation()">
+    <!-- 구성원 드롭다운 -->
+  </select>
+  <br>
+  <div id="filteredConversation">
+    <!-- 필터링된 대화 -->
+  </div>
+  <script>
+    const participants = new Set();
+    const messages = [];
+
+    function parseConversation() {
+      const conversationText = document.getElementById('conversation').value;
+      const lines = conversationText.split('\n');
+
+      for (const line of lines) {
+        const nameMatch = line.match(/\[* (.*?)\]/);
+        const timeMatch = line.match(/\[(오전|오후) (.*?)\]/);
+
+        if (nameMatch && timeMatch) {
+          const name = nameMatch[1];
+          const time = timeMatch[1] + ' ' + timeMatch[2];
+          const messageText = line.substring(timeMatch.index + timeMatch[0].length + 1).trim();
+
+          const message = {
+            name,
+            time,
+            text: messageText
+          };
+
+          participants.add(name);
+          messages.push(message);
+        }
+      }
+
+      const participantSelect = document.getElementById('participant');
+      participantSelect.innerHTML = '<option selected value="">모두 보기</option>';
+      for (const participant of participants) {
+        const option = document.createElement('option');
+        option.value = participant;
+        option.innerText = participant;
+        participantSelect.appendChild(option);
+      }
+
+      refreshFilteredConversation();
+    }
+
+    function filterConversation() {
+      const participantSelect = document.getElementById('participant');
+      const selectedParticipant = participantSelect.value;
+      const filteredMessages = messages.filter((message) => selectedParticipant === '' || message.name === selectedParticipant);
+      refreshFilteredConversation(filteredMessages);
+    }
+
+    function refreshFilteredConversation(messagesToDisplay) {
+      const filteredConversationDiv = document.getElementById('filteredConversation');
+      filteredConversationDiv.innerHTML = '';
+
+      for (const message of messagesToDisplay) {
+        const messageDiv = document.createElement('div');
+        messageDiv.innerText = `[${message.name}] [${message.time}] ${message.text}`;
+        filteredConversationDiv.appendChild(messageDiv);
+      }
+    }
+  </script>
+</body>
+</html>
